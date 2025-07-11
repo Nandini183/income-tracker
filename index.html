@@ -4,12 +4,27 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Income Tracker</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
+    :root {
+      --bg-color: #f9f9fb;
+      --text-color: #333;
+      --card-bg: #fff;
+    }
+
+    .dark-mode {
+      --bg-color: #1e1e1e;
+      --text-color: #f1f1f1;
+      --card-bg: #2a2a2a;
+    }
+
     body {
       font-family: 'Segoe UI', sans-serif;
-      background: #f9f9fb;
+      background: var(--bg-color);
+      color: var(--text-color);
       padding: 20px;
       margin: 0;
+      transition: background 0.3s, color 0.3s;
     }
 
     h1 {
@@ -18,9 +33,9 @@
     }
 
     .container {
-      max-width: 800px;
+      max-width: 900px;
       margin: auto;
-      background: #fff;
+      background: var(--card-bg);
       padding: 25px;
       border-radius: 10px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.1);
@@ -55,6 +70,16 @@
       padding: 10px;
       margin-bottom: 10px;
       border-radius: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .entry span {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-direction: column;
     }
 
     .summary {
@@ -63,6 +88,36 @@
       border-radius: 8px;
       margin-top: 20px;
       font-size: 18px;
+    }
+
+    .badge {
+      padding: 4px 8px;
+      border-radius: 5px;
+      font-size: 12px;
+      color: white;
+    }
+
+    .Salary-badge { background-color: #4caf50; }
+    .Freelance-badge { background-color: #ff9800; }
+    .Passive-Income-badge { background-color: #2196f3; }
+
+    .icon::before {
+      content: '💼';
+    }
+    .Freelance .icon::before { content: '🧑‍💻'; }
+    .Passive-Income .icon::before { content: '💸'; }
+
+    .actions button {
+      padding: 4px 8px;
+      margin-left: 5px;
+      font-size: 12px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .chart-container {
+      margin-top: 40px;
     }
   </style>
 </head>
@@ -84,6 +139,8 @@
     <input type="date" id="date" />
 
     <button onclick="addIncome()">Add Income</button>
+    <button onclick="toggleDarkMode()">Toggle Dark Mode</button>
+    <button onclick="exportCSV()">Export CSV</button>
 
     <div class="filter-section">
       <h3>Filter by Date</h3>
@@ -96,6 +153,10 @@
 
     <h3>All Income Entries</h3>
     <div id="incomeList"></div>
+
+    <div class="chart-container">
+      <canvas id="incomeChart" height="100"></canvas>
+    </div>
   </div>
 
   <script>
@@ -113,43 +174,91 @@
 
       incomes.push({ source, amount, date });
       localStorage.setItem("incomes", JSON.stringify(incomes));
-      renderIncomes(incomes);
       document.getElementById("amount").value = "";
       document.getElementById("date").value = "";
+      renderIncomes(incomes);
+    }
+
+    function deleteIncome(index) {
+      incomes.splice(index, 1);
+      localStorage.setItem("incomes", JSON.stringify(incomes));
+      renderIncomes(incomes);
     }
 
     function renderIncomes(data) {
       const list = document.getElementById("incomeList");
       list.innerHTML = "";
-
       let total = 0;
+      const typeTotals = {};
 
-      data.forEach((item) => {
+      data.forEach((item, index) => {
+        total += item.amount;
+        const key = item.source.replace(/\s+/g, "-");
+        typeTotals[item.source] = (typeTotals[item.source] || 0) + item.amount;
+
         const div = document.createElement("div");
         div.classList.add("entry");
         div.innerHTML = `
-          <strong>${item.source}</strong> — ₹${item.amount} <br/>
-          <small>${item.date}</small>
+          <span>
+            <span class="badge ${key}-badge"><span class="icon ${key}"></span> ${item.source}</span>
+            ₹${item.amount}<br><small>${item.date}</small>
+          </span>
+          <div class="actions">
+            <button onclick="deleteIncome(${index})">❌</button>
+          </div>
         `;
         list.appendChild(div);
-        total += item.amount;
       });
 
       document.getElementById("totalSummary").textContent = `Total Income: ₹${total}`;
+      updateChart(typeTotals);
     }
 
     function applyFilter() {
       const start = document.getElementById("startDate").value;
       const end = document.getElementById("endDate").value;
-
-      const filtered = incomes.filter((item) => {
-        return (!start || item.date >= start) && (!end || item.date <= end);
-      });
-
+      const filtered = incomes.filter(item => (!start || item.date >= start) && (!end || item.date <= end));
       renderIncomes(filtered);
     }
 
-    // On page load
+    function toggleDarkMode() {
+      document.body.classList.toggle("dark-mode");
+    }
+
+    function exportCSV() {
+      let csv = "Source,Amount,Date\\n";
+      incomes.forEach(item => {
+        csv += `${item.source},${item.amount},${item.date}\\n`;
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "income_data.csv";
+      link.click();
+    }
+
+    let chart;
+    function updateChart(data) {
+      const ctx = document.getElementById("incomeChart").getContext("2d");
+      const labels = Object.keys(data);
+      const values = Object.values(data);
+
+      if (chart) chart.destroy();
+
+      chart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Income by Type',
+            data: values,
+            backgroundColor: ['#4caf50', '#ff9800', '#2196f3']
+          }]
+        }
+      });
+    }
+
     renderIncomes(incomes);
   </script>
 
