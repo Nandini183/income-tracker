@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Income Tracker</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f9f9fb;
+      padding: 20px;
+      margin: 0;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: auto;
+      background: #fff;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    label, input, select {
+      display: block;
+      width: 100%;
+      margin-bottom: 15px;
+      padding: 10px;
+      font-size: 16px;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background-color: #2d8eff;
+      color: white;
+      border: none;
+      font-size: 16px;
+      cursor: pointer;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+
+    .filter-section {
+      margin-top: 30px;
+    }
+
+    .entry {
+      background: #eaf3ff;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 6px;
+    }
+
+    .summary {
+      background: #d9ffd9;
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 20px;
+      font-size: 18px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>💰 Income Tracker</h1>
+  <div class="container">
+    <label for="source">Income Source</label>
+    <select id="source">
+      <option value="Salary">Salary</option>
+      <option value="Freelance">Freelance</option>
+      <option value="Passive Income">Passive Income</option>
+    </select>
+
+    <label for="amount">Amount (₹)</label>
+    <input type="number" id="amount" placeholder="Enter amount" />
+
+    <label for="date">Date</label>
+    <input type="date" id="date" />
+
+    <button onclick="addIncome()">Add Income</button>
+
+    <div class="filter-section">
+      <h3>Filter by Date</h3>
+      <input type="date" id="startDate" />
+      <input type="date" id="endDate" />
+      <button onclick="applyFilter()">Apply Filter</button>
+    </div>
+
+    <div class="summary" id="totalSummary">Total Income: ₹0</div>
+
+    <h3>All Income Entries</h3>
+    <div id="incomeList"></div>
+  </div>
+
+  <script>
+    let incomes = JSON.parse(localStorage.getItem("incomes")) || [];
+
+    function addIncome() {
+      const source = document.getElementById("source").value;
+      const amount = parseFloat(document.getElementById("amount").value);
+      const date = document.getElementById("date").value;
+
+      if (!amount || !date) {
+        alert("Please enter a valid amount and date.");
+        return;
+      }
+
+      incomes.push({ source, amount, date });
+      localStorage.setItem("incomes", JSON.stringify(incomes));
+      renderIncomes(incomes);
+      document.getElementById("amount").value = "";
+      document.getElementById("date").value = "";
+    }
+
+    function renderIncomes(data) {
+      const list = document.getElementById("incomeList");
+      list.innerHTML = "";
+
+      let total = 0;
+
+      data.forEach((item) => {
+        const div = document.createElement("div");
+        div.classList.add("entry");
+        div.innerHTML = `
+          <strong>${item.source}</strong> — ₹${item.amount} <br/>
+          <small>${item.date}</small>
+        `;
+        list.appendChild(div);
+        total += item.amount;
+      });
+
+      document.getElementById("totalSummary").textContent = `Total Income: ₹${total}`;
+    }
+
+    function applyFilter() {
+      const start = document.getElementById("startDate").value;
+      const end = document.getElementById("endDate").value;
+
+      const filtered = incomes.filter((item) => {
+        return (!start || item.date >= start) && (!end || item.date <= end);
+      });
+
+      renderIncomes(filtered);
+    }
+
+    // On page load
+    renderIncomes(incomes);
+  </script>
+
+</body>
+</html>
