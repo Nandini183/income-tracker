@@ -5,31 +5,37 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Income Tracker</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg-color: #f9f9fb;
+      --bg-color: linear-gradient(to right, #f9f9fb, #e0f7fa);
       --text-color: #333;
-      --card-bg: #fff;
+      --card-bg: #ffffff;
     }
 
     .dark-mode {
-      --bg-color: #1e1e1e;
+      --bg-color: linear-gradient(to right, #1e1e1e, #2b2b2b);
       --text-color: #f1f1f1;
       --card-bg: #2a2a2a;
     }
 
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      font-family: 'Segoe UI', sans-serif;
+      font-family: 'Poppins', sans-serif;
       background: var(--bg-color);
       color: var(--text-color);
       padding: 20px;
       margin: 0;
-      transition: background 0.3s, color 0.3s;
+      transition: background 0.5s ease, color 0.5s ease;
     }
 
     h1 {
       text-align: center;
       margin-bottom: 30px;
+      font-weight: 600;
     }
 
     .container {
@@ -37,8 +43,14 @@
       margin: auto;
       background: var(--card-bg);
       padding: 25px;
-      border-radius: 10px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      border-radius: 15px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+      animation: fadeIn 1s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     label, input, select {
@@ -47,18 +59,26 @@
       margin-bottom: 15px;
       padding: 10px;
       font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
     }
 
     button {
       width: 100%;
       padding: 12px;
-      background-color: #2d8eff;
+      background: linear-gradient(to right, #2d8eff, #6bc1ff);
       color: white;
       border: none;
       font-size: 16px;
+      font-weight: 600;
       cursor: pointer;
       border-radius: 8px;
-      margin-bottom: 20px;
+      margin-bottom: 15px;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background: linear-gradient(to right, #1a7ddf, #59b3f7);
     }
 
     .filter-section {
@@ -67,17 +87,23 @@
 
     .entry {
       background: #eaf3ff;
-      padding: 10px;
-      margin-bottom: 10px;
-      border-radius: 6px;
+      padding: 12px;
+      margin-bottom: 12px;
+      border-radius: 10px;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      animation: slideIn 0.5s ease;
+    }
+
+    @keyframes slideIn {
+      from { transform: translateX(-30px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
     }
 
     .entry span {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       gap: 10px;
       flex-direction: column;
     }
@@ -85,16 +111,18 @@
     .summary {
       background: #d9ffd9;
       padding: 15px;
-      border-radius: 8px;
+      border-radius: 10px;
       margin-top: 20px;
       font-size: 18px;
+      font-weight: 500;
     }
 
     .badge {
-      padding: 4px 8px;
+      padding: 4px 10px;
       border-radius: 5px;
-      font-size: 12px;
+      font-size: 13px;
       color: white;
+      font-weight: 500;
     }
 
     .Salary-badge { background-color: #4caf50; }
@@ -108,12 +136,19 @@
     .Passive-Income .icon::before { content: '💸'; }
 
     .actions button {
-      padding: 4px 8px;
+      padding: 6px 10px;
       margin-left: 5px;
-      font-size: 12px;
+      font-size: 14px;
       border: none;
-      border-radius: 4px;
+      border-radius: 6px;
+      background-color: #ff4d4d;
+      color: white;
       cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    .actions button:hover {
+      background-color: #e60000;
     }
 
     .chart-container {
@@ -139,8 +174,8 @@
     <input type="date" id="date" />
 
     <button onclick="addIncome()">Add Income</button>
-    <button onclick="toggleDarkMode()">Toggle Dark Mode</button>
-    <button onclick="exportCSV()">Export CSV</button>
+    <button onclick="toggleDarkMode()">🌙 Toggle Dark Mode</button>
+    <button onclick="exportCSV()">📥 Export CSV</button>
 
     <div class="filter-section">
       <h3>Filter by Date</h3>
@@ -226,9 +261,9 @@
     }
 
     function exportCSV() {
-      let csv = "Source,Amount,Date\\n";
+      let csv = "Source,Amount,Date\n";
       incomes.forEach(item => {
-        csv += `${item.source},${item.amount},${item.date}\\n`;
+        csv += `${item.source},${item.amount},${item.date}\n`;
       });
 
       const blob = new Blob([csv], { type: 'text/csv' });
